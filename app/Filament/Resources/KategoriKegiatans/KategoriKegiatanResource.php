@@ -9,11 +9,11 @@ use App\Filament\Resources\KategoriKegiatans\Schemas\KategoriKegiatanForm;
 use App\Filament\Resources\KategoriKegiatans\Tables\KategoriKegiatansTable;
 use App\Models\KategoriKegiatan;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class KategoriKegiatanResource extends Resource
 {

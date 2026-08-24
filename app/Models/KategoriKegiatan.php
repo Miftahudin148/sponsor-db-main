@@ -13,6 +13,7 @@ class KategoriKegiatan extends Model
     protected $fillable = [
         'nama_kategori',
         'deskripsi',
+        'warna',
     ];
 
     public function kegiatans(): HasMany

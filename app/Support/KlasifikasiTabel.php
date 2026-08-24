@@ -36,6 +36,36 @@ class KlasifikasiTabel
     public const KATEGORI_FALLBACK = 'multi';
 
     /**
+     * Palet warna kategori (hex) untuk pewarnaan badge & sortir menurut
+     * warna di tabel kontak. Kegiatan tanpa warna sendiri mewarisi warna
+     * kategorinya.
+     *
+     * @var array<string, string>
+     */
+    public const WARNA_KATEGORI = [
+        'umum_estetik' => '#EC4899',
+        'anak' => '#F59E0B',
+        'obgyn' => '#8B5CF6',
+        'gizi_klinik' => '#10B981',
+        'paru' => '#0EA5E9',
+        'andrologi' => '#6366F1',
+        'kejiwaan' => '#EF4444',
+        'neurologi' => '#14B8A6',
+        'orthopedi' => '#F97316',
+        'multi' => '#64748B',
+    ];
+
+    /**
+     * Warna kategori berdasarkan nama kategorinya (kebalikan KATEGORI).
+     */
+    public static function warnaKategori(string $namaKategori): ?string
+    {
+        $key = array_search($namaKategori, self::KATEGORI, true);
+
+        return $key === false ? null : (self::WARNA_KATEGORI[$key] ?? null);
+    }
+
+    /**
      * Petakan pertanda nama event (sudah dinormalisasi) -> key kategori.
      * Dicocokkan sebagai SUBSTRING dari nama event ternormalisasi.
      *
