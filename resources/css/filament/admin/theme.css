@@ -1,0 +1,84 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../../resources/views/livewire/**/*';
+
+/*
+ * Self-hosted typefaces.
+ *
+ * Inter Variable is the Filament default body face; Sora is used for
+ * headings and IBM Plex Mono for numeric/labelled data.
+ */
+@import '../../../../public/fonts/filament/filament/inter/index.css';
+
+@font-face {
+    font-family: 'Sora';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 800;
+    src: url('../../../../public/fonts/sora/sora-latin-wght-normal.woff2')
+        format('woff2-variations');
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 400;
+    src: url('../../../../public/fonts/ibm-plex-mono/ibm-plex-mono-latin-400.woff2')
+        format('woff2');
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 500;
+    src: url('../../../../public/fonts/ibm-plex-mono/ibm-plex-mono-latin-500.woff2')
+        format('woff2');
+}
+
+@font-face {
+    font-family: 'IBM Plex Mono';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 600;
+    src: url('../../../../public/fonts/ibm-plex-mono/ibm-plex-mono-latin-600.woff2')
+        format('woff2');
+}
+
+@theme {
+    --font-display: 'Sora', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Route all monospace/tabular contexts through IBM Plex Mono. The inline
+ * `--mono-font-family` set in the panel layout is overridden here.
+ */
+:root {
+    --mono-font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace !important;
+}
+
+/* Typeface hierarchy: headings, sections and modals use the display face. */
+.fi-header-heading,
+.fi-simple-header-heading,
+.fi-modal-heading,
+.fi-section-header-heading,
+.fi-global-search-result-heading {
+    font-family: var(--font-display);
+}
+
+/* Tighten heading tracking without touching the numeric mono contexts. */
+.fi-header-heading {
+    letter-spacing: -0.02em;
+}
+
+.fi-section-header-heading {
+    letter-spacing: -0.01em;
+}
+
+/* Brand mark in the sidebar header. */
+.fi-logo {
+    font-family: var(--font-display);
+}
