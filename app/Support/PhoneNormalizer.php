@@ -17,14 +17,12 @@ class PhoneNormalizer
             return '';
         }
 
-        $digits = preg_replace('/\D/', '', $value);
+        $digits = preg_replace('/\D/', '', $value) ?? '';
+        // Buang 0 di depan (mis. 0811, 06208) sebelum koreksi 620 -> 62
+        $digits = ltrim($digits, '0');
 
         if (str_starts_with($digits, '620')) {
             $digits = '62'.substr($digits, 3);
-        }
-
-        if (str_starts_with($digits, '0')) {
-            $digits = substr($digits, 1);
         }
 
         if (! str_starts_with($digits, '62') && str_starts_with($digits, '8')) {

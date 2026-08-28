@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Kontaks\Schemas;
 
+use App\Models\Kegiatan;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -37,7 +38,7 @@ class KontakForm
                     ->preload()
                     ->live()
                     ->afterStateUpdated(function (?string $state, Set $set): void {
-                        $kategoriId = $state ? \App\Models\Kegiatan::find($state)?->kategori_kegiatan_id : null;
+                        $kategoriId = $state ? Kegiatan::find($state)?->kategori_kegiatan_id : null;
                         $set('kategori_kegiatan_id', $kategoriId);
                     }),
                 Select::make('kategori_kegiatan_id')

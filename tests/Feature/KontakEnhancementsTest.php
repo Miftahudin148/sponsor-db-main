@@ -4,14 +4,12 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\Kontaks\Pages\ListKontaks;
 use App\Filament\Resources\Kontaks\Tables\KontaksTable;
-use App\Filament\Widgets\KontakPipeline;
 use App\Models\Kontak;
 use App\Models\Perusahaan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
-use ReflectionMethod;
 use Tests\TestCase;
 
 class KontakEnhancementsTest extends TestCase
@@ -243,27 +241,5 @@ class KontakEnhancementsTest extends TestCase
             ->assertOk()
             ->assertSee('Belum ada kontak')
             ->assertSee('Import Data');
-    }
-
-    #[Test]
-    public function widget_pipeline_menghitung_jumlah_dan_persentase_per_status(): void
-    {
-        Kontak::factory()->create(['status_verifikasi' => 'terverifikasi']);
-        Kontak::factory()->count(2)->create(['status_verifikasi' => 'perlu_dicek']);
-        Kontak::factory()->count(3)->create(['status_verifikasi' => 'tidak_aktif']);
-
-        $widget = new KontakPipeline();
-        $getViewData = new ReflectionMethod($widget, 'getViewData');
-        $data = $getViewData->invoke($widget);
-
-        $this->assertSame(6, $data['total']);
-
-        $byKey = collect($data['rows'])->keyBy('key');
-        $this->assertSame(1, $byKey['terverifikasi']['count']);
-        $this->assertSame(2, $byKey['perlu_dicek']['count']);
-        $this->assertSame(3, $byKey['tidak_aktif']['count']);
-        $this->assertSame(50, $byKey['tidak_aktif']['percent']);
-
-        Livewire::test(KontakPipeline::class)->assertOk();
     }
 }

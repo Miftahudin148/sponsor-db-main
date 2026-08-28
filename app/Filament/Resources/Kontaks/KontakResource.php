@@ -10,7 +10,6 @@ use App\Filament\Resources\Kontaks\Schemas\KontakInfolist;
 use App\Filament\Resources\Kontaks\Tables\KontaksTable;
 use App\Models\Kontak;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -28,7 +27,7 @@ class KontakResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Kontak';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Master Data';
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {

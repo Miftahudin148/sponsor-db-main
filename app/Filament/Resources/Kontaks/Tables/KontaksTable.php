@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Kontaks\Tables;
 use App\Filament\Pages\ImportKontaks;
 use App\Models\Kontak;
 use App\Support\KontakSmartSearch;
+use App\Support\PetaNomorPerusahaan;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -23,6 +24,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Pagination\Paginator as ContractsPaginator;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -31,18 +33,27 @@ class KontaksTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['perusahaan', 'kegiatan', 'kategoriKegiatan', 'updatedBy']))
             ->searchable(false)
             ->striped()
             ->header(fn (HasTable $livewire): View => view('filament.tables.kontak-summary', [
                 'cards' => self::summaryCards($livewire),
+                'warnaBaris' => self::warnaBarisAktif($livewire),
             ]))
             ->columnManagerLayout(ColumnManagerLayout::Modal)
             ->deferColumnManager(false)
             ->columnManagerColumns(2)
             ->reorderableColumns()
-            ->recordClasses(fn (Kontak $record): ?string => (auth()->user()?->isAdmin() && $record->perusahaanLainDenganNomorSama() !== [])
-                ? 'bg-danger-500/10 dark:bg-danger-500/20'
-                : null)
+            ->recordClasses(function (Kontak $record, HasTable $livewire): ?string {
+                // Sorotan nomor ganda (admin) lebih penting daripada pewarnaan
+                // baris menurut kegiatan/kategori.
+                if (auth()->user()?->isAdmin()
+                    && PetaNomorPerusahaan::untukKontak($record, $livewire->petaNomorDipakai()) !== []) {
+                    return 'bg-danger-500/10 dark:bg-danger-500/20';
+                }
+
+                return self::kelasWarnaBaris(self::warnaEfektifBaris($record));
+            })
             ->emptyStateHeading('Belum ada kontak')
             ->emptyStateDescription('Mulai dengan mengimpor file kontak sponsor (Excel/CSV) atau membuat kontak baru satu per satu.')
             ->emptyStateIcon(Heroicon::OutlinedInbox)
@@ -94,7 +105,19 @@ class KontaksTable
                     ->label('Kegiatan')
                     ->size(TextSize::Small)
                     ->searchable()
-                    ->sortable()
+                    ->badge()
+                    ->color(fn (Kontak $record): ?string => $record->kegiatan?->warna ?? $record->kategoriKegiatan?->warna)
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        // Sortir menurut warna lewat JOIN 1:1 (jauh lebih murah
+                        // daripada correlated subquery per baris); arah di-whitelist.
+                        $arah = $direction === 'desc' ? 'desc' : 'asc';
+
+                        return $query
+                            ->leftJoin('kegiatans as sort_kegiatan', 'sort_kegiatan.id', '=', 'kontaks.kegiatan_id')
+                            ->leftJoin('kategori_kegiatans as sort_kategori', 'sort_kategori.id', '=', 'sort_kegiatan.kategori_kegiatan_id')
+                            ->orderByRaw('coalesce(sort_kegiatan.warna, sort_kategori.warna) '.$arah)
+                            ->orderBy('sort_kegiatan.nama_event', $arah);
+                    })
                     ->placeholder('-')
                     ->limit(26)
                     ->tooltip(fn (Kontak $record): ?string => $record->kegiatan?->nama_event)
@@ -104,9 +127,17 @@ class KontaksTable
                     ->label('Kategori')
                     ->size(TextSize::Small)
                     ->searchable()
-                    ->sortable()
                     ->badge()
-                    ->color('primary')
+                    ->color(fn (Kontak $record): ?string => $record->kategoriKegiatan?->warna ?? 'primary')
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        // Sortir menurut warna kategori, nama kategori sebagai tie-breaker.
+                        $arah = $direction === 'desc' ? 'desc' : 'asc';
+
+                        return $query
+                            ->leftJoin('kategori_kegiatans as sort_kategori', 'sort_kategori.id', '=', 'kontaks.kategori_kegiatan_id')
+                            ->orderBy('sort_kategori.warna', $arah)
+                            ->orderBy('sort_kategori.nama_kategori', $arah);
+                    })
                     ->placeholder('-')
                     ->limit(28)
                     ->tooltip(fn (Kontak $record): ?string => $record->kategoriKegiatan?->nama_kategori)
@@ -157,7 +188,7 @@ class KontaksTable
                     ->badge()
                     ->color('danger')
                     ->size(TextSize::ExtraSmall)
-                    ->state(fn (Kontak $record): ?array => $record->perusahaanLainDenganNomorSama())
+                    ->state(fn (Kontak $record, HasTable $livewire): ?array => PetaNomorPerusahaan::untukKontak($record, $livewire->petaNomorDipakai()))
                     ->formatStateUsing(fn (?array $state): ?string => $state ? implode('; ', $state) : null)
                     ->placeholder('-')
                     ->visible(fn (): bool => (bool) auth()->user()?->isAdmin())
@@ -222,6 +253,50 @@ class KontaksTable
     }
 
     /**
+     * Warna efektif pewarnaan baris: warna kegiatan, bila kosong mewarisi
+     * warna kategorinya. Baris dengan kegiatan/kategori yang sama otomatis
+     * berbagi warna yang sama.
+     */
+    public static function warnaEfektifBaris(Kontak $record): ?string
+    {
+        return $record->kegiatan?->warna ?? $record->kategoriKegiatan?->warna;
+    }
+
+    /**
+     * Kelas CSS baris untuk nilai warna hex (#RRGGBB). Null bila format tidak
+     * dikenal agar nilai liar tidak pernah bocor ke stylesheet.
+     */
+    public static function kelasWarnaBaris(?string $hex): ?string
+    {
+        if ($hex === null || preg_match('/^#[0-9a-fA-F]{6}$/', $hex) !== 1) {
+            return null;
+        }
+
+        return 'baris-warna-'.strtolower(substr($hex, 1));
+    }
+
+    /**
+     * Daftar warna unik dari records halaman aktif (relasi sudah eager-load),
+     * dipakai header tabel untuk menghasilkan aturan <style> pewarnaan baris.
+     *
+     * @return array<int, string>
+     */
+    public static function warnaBarisAktif(HasTable $livewire): array
+    {
+        $records = $livewire->getTableRecords();
+
+        $items = collect($records instanceof ContractsPaginator ? $records->items() : $records);
+
+        return $items
+            ->map(fn ($record): ?string => self::warnaEfektifBaris($record))
+            ->filter(fn (?string $hex): bool => $hex !== null && preg_match('/^#[0-9a-fA-F]{6}$/', $hex) === 1)
+            ->map(fn (string $hex): string => strtolower($hex))
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
      * Ringkasan yang mengikuti filter aktif pada tabel. Ditampilkan sebagai
      * strip statistik di atas tabel (bukan footer bawaan Filament).
      *
@@ -235,7 +310,20 @@ class KontaksTable
             return [];
         }
 
-        $count = static fn (callable $scope): int => (int) $scope(clone $query)->count();
+        // Satu query agregat menggantikan lima COUNT terpisah.
+        $ringkas = (clone $query)
+            ->selectRaw(implode(', ', [
+                'count(*) as total',
+                'sum(case when status_format_valid = 1 then 1 else 0 end) as valid',
+                "sum(case when status_verifikasi = 'terverifikasi' then 1 else 0 end) as terverifikasi",
+                "sum(case when status_verifikasi = 'perlu_dicek' then 1 else 0 end) as perlu_dicek",
+                "sum(case when status_verifikasi = 'tidak_aktif' then 1 else 0 end) as tidak_aktif",
+            ]))
+            ->first();
+
+        if ($ringkas === null) {
+            return [];
+        }
 
         return [
             [
@@ -243,35 +331,35 @@ class KontaksTable
                 'label' => 'Total kontak',
                 'icon' => 'heroicon-o-user-group',
                 'color' => '#1E2A4A',
-                'count' => $count(fn (Builder $q): Builder => $q),
+                'count' => (int) $ringkas->total,
             ],
             [
                 'key' => 'valid',
                 'label' => 'Nomor valid',
                 'icon' => 'heroicon-o-check-badge',
                 'color' => '#1F8A70',
-                'count' => $count(fn (Builder $q): Builder => $q->where('status_format_valid', true)),
+                'count' => (int) $ringkas->valid,
             ],
             [
                 'key' => 'terverifikasi',
                 'label' => 'Terverifikasi',
                 'icon' => 'heroicon-o-check-circle',
                 'color' => '#2E7D32',
-                'count' => $count(fn (Builder $q): Builder => $q->where('status_verifikasi', 'terverifikasi')),
+                'count' => (int) $ringkas->terverifikasi,
             ],
             [
                 'key' => 'perlu_dicek',
                 'label' => 'Perlu dicek',
                 'icon' => 'heroicon-o-clock',
                 'color' => '#D98E04',
-                'count' => $count(fn (Builder $q): Builder => $q->where('status_verifikasi', 'perlu_dicek')),
+                'count' => (int) $ringkas->perlu_dicek,
             ],
             [
                 'key' => 'tidak_aktif',
                 'label' => 'Tidak aktif',
                 'icon' => 'heroicon-o-x-circle',
                 'color' => '#C0392B',
-                'count' => $count(fn (Builder $q): Builder => $q->where('status_verifikasi', 'tidak_aktif')),
+                'count' => (int) $ringkas->tidak_aktif,
             ],
         ];
     }

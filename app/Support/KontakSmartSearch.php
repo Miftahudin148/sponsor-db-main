@@ -39,20 +39,33 @@ class KontakSmartSearch
                     ? $this->phoneNeedle($token)
                     : '';
 
-                if ($useText) {
-                    $q->where(function (Builder $inner) use ($token): void {
-                        $needle = $this->textNeedle($token);
+                $hasText = $useText;
+                $hasPhone = $phoneNeedle !== '';
 
+                if (! $hasText && ! $hasPhone) {
+                    continue;
+                }
+
+                $q->where(function (Builder $inner) use ($token, $hasText, $hasPhone, $phoneNeedle): void {
+                    // Gabung text OR phone untuk token yang sama — hindari AND berlebihan yang bikin 0 hasil
+                    if ($hasText && $hasPhone) {
+                        $needle = $this->textNeedle($token);
+                        $inner->where(function (Builder $sub) use ($needle): void {
+                            $sub->whereHas('perusahaan', fn (Builder $p): Builder => $p->where('nama_standar', 'like', $needle))
+                                ->orWhere('kontaks.nama', 'like', $needle)
+                                ->orWhereHas('kegiatan', fn (Builder $k): Builder => $k->where('nama_event', 'like', $needle))
+                                ->orWhereHas('kategoriKegiatan', fn (Builder $k): Builder => $k->where('nama_kategori', 'like', $needle));
+                        })->orWhere('kontaks.no_telepon', 'like', $phoneNeedle);
+                    } elseif ($hasText) {
+                        $needle = $this->textNeedle($token);
                         $inner->whereHas('perusahaan', fn (Builder $p): Builder => $p->where('nama_standar', 'like', $needle))
                             ->orWhere('kontaks.nama', 'like', $needle)
                             ->orWhereHas('kegiatan', fn (Builder $k): Builder => $k->where('nama_event', 'like', $needle))
                             ->orWhereHas('kategoriKegiatan', fn (Builder $k): Builder => $k->where('nama_kategori', 'like', $needle));
-                    });
-                }
-
-                if ($phoneNeedle !== '') {
-                    $q->where(fn (Builder $inner): Builder => $inner->where('kontaks.no_telepon', 'like', $phoneNeedle));
-                }
+                    } else {
+                        $inner->where('kontaks.no_telepon', 'like', $phoneNeedle);
+                    }
+                });
             }
         });
     }

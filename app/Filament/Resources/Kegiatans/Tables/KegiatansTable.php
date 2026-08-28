@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Kegiatans\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Tables\Columns\ColorColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -19,6 +20,10 @@ class KegiatansTable
                     ->label('Nama Event')
                     ->searchable()
                     ->weight('semibold'),
+                ColorColumn::make('warna')
+                    ->label('Warna')
+                    ->copyable()
+                    ->placeholder('-'),
                 TextColumn::make('kategoriKegiatan.nama_kategori')
                     ->label('Kategori')
                     ->searchable()

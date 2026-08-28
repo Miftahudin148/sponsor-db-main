@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\KategoriKegiatans\KategoriKegiatanResource;
 use App\Filament\Resources\KategoriKegiatans\Pages\CreateKategoriKegiatan;
 use App\Filament\Resources\KategoriKegiatans\Pages\ListKategoriKegiatans;
-use App\Filament\Resources\KategoriKegiatans\KategoriKegiatanResource;
 use App\Filament\Resources\Kegiatans\Pages\ListKegiatans;
 use App\Filament\Resources\Kontaks\Pages\CreateKontak;
 use App\Filament\Resources\Perusahaans\Pages\CreatePerusahaan;

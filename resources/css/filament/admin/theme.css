@@ -82,3 +82,62 @@
 .fi-logo {
     font-family: var(--font-display);
 }
+
+/*
+ * Sidebar kompak.
+ *
+ * Lebar panel dikontrol via ->sidebarWidth() di AdminPanelProvider;
+ * bagian ini merapatkan header, nav, item, dan footer agar ruang vertikal
+ * lebih efisien tanpa mengubah hierarki visual Filament.
+ */
+.fi-sidebar-header {
+    height: 3.5rem;
+}
+
+.fi-sidebar-nav {
+    padding: 0.875rem 0.625rem 1.25rem;
+    row-gap: 1.125rem;
+}
+
+/* Netralkan -mx-2 bawaan agar item tetap sejajar dengan padding baru. */
+.fi-sidebar-nav-groups {
+    margin-inline: 0;
+    row-gap: 1rem;
+}
+
+/* Judul grup: kecil, kapital, seperti pola sidebar aplikasi profesional. */
+.fi-sidebar-group-label {
+    font-size: 0.6875rem;
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.fi-sidebar-group-btn {
+    padding-block: 0.3125rem;
+    column-gap: 0.625rem;
+}
+
+.fi-sidebar-item-btn {
+    padding: 0.40625rem 0.5rem;
+    column-gap: 0.625rem;
+}
+
+.fi-sidebar-item-label {
+    font-size: 0.8125rem;
+    line-height: 1.35;
+}
+
+/* Ikon sidebar 20px (default lg = 24px); border titik sub-item ikut disesuaikan. */
+.fi-sidebar .fi-sidebar-item-icon,
+.fi-sidebar .fi-sidebar-group-btn .fi-icon,
+.fi-sidebar .fi-sidebar-item-grouped-border {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.fi-sidebar-footer {
+    margin: 0.75rem 0.5rem 0.5rem;
+    row-gap: 0.5rem;
+}

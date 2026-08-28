@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Kegiatans\Schemas;
 
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -24,6 +25,9 @@ class KegiatanForm
                     ->label('Nama Event')
                     ->required()
                     ->maxLength(255),
+                ColorPicker::make('warna')
+                    ->label('Warna')
+                    ->helperText('Dipakai untuk badge & sortir menurut warna. Kosongkan untuk mewarisi warna kategori.'),
                 DatePicker::make('tanggal_mulai')
                     ->label('Tanggal Mulai')
                     ->helperText('Kosongkan bila tanggal event belum diketahui'),

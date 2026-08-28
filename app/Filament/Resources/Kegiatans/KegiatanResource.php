@@ -8,11 +8,11 @@ use App\Filament\Resources\Kegiatans\Schemas\KegiatanForm;
 use App\Filament\Resources\Kegiatans\Tables\KegiatansTable;
 use App\Models\Kegiatan;
 use BackedEnum;
-use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class KegiatanResource extends Resource
 {

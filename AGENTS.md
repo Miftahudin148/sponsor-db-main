@@ -1,126 +1,78 @@
 # AGENTS.md — ICM Sponsor Database
 
-Panduan untuk AI agent & developer yang bekerja di codebase ini.
+Domain pakai **bahasa Indonesia** (`Kontak`, `perusahaan_id`, `muatData`, `KlasifikasiTabel`) — ikuti untuk model, kolom, method, komentar.
 
-## 1. Ringkasan Sistem
+## Stack & Entrypoint
 
-Sistem informasi manajemen **database kontak sponsor** (sponsor CRM ringkas) untuk kegiatan/event medis. Fitur utama:
+- Laravel 12 + PHP ^8.2 + Filament ^5.7 (Livewire 3) di `/admin` brand "ICM Sponsor" (wajib login) + Tailwind v4 (Vite) + phpspreadsheet ^5.9 + SQLite. Sumber kebenaran: `composer.json`/`package.json`/`vite.config.js`/`phpunit.xml` — `README.md` boilerplate, abaikan.
+- Entrypoint: `app/Support/KlasifikasiTabel.php` (kamus kanonik), `app/Services/KontakImportService.php` (impor), `app/Livewire/SanitizeUtf8State.php` (hook global), `app/Filament/Resources/*/{Schemas,Tables,Pages}` (Filament v5 split), `routes/web.php:11` export CSV.
+- Bukan monorepo. 4 resource saja: Kontaks, Perusahaans, Kegiatans, KategoriKegiatans (tidak ada resource Users).
 
-- **Admin panel** (Filament v5) di path `/admin` dengan brand "ICM Sponsor".
-- **Master data**: Perusahaan, Kegiatan (event), Kategori Kegiatan.
-- **Kontak**: PIC perusahaan per kegiatan, dengan status verifikasi & validitas format nomor HP.
-- **Import Excel/CSV** multi-sheet cerdas (`Import Data` page): deteksi header otomatis, pemisahan nama/nomor dalam satu sel, klasifikasi duplikat/baru/junk, pratinjau sebelum simpan.
-- **Ekspor CSV** kontak: `/admin/kontak/export`.
-- **Dashboard widget**: statistik kontak, chart status verifikasi, pipeline.
-- **Perintah artisan**: muat data latih dari folder "data training", normalisasi nomor kontak massal.
-
-## 2. Teknologi
-
-| Komponen | Versi/Teknologi |
-|---|---|
-| PHP | ^8.2 |
-| Framework | Laravel 12 |
-| Admin panel | Filament 5.7 (panel `admin`) |
-| Spreadsheet | phpoffice/phpspreadsheet + league/csv |
-| Frontend | Vite 7 + Tailwind CSS 4 (tema Filament custom) |
-| Database | SQLite (default `.env`), mendukung MySQL |
-| Test | PHPUnit 11 (`phpunit.xml`, env `testing`) |
-| Code style | Laravel Pint |
-
-## 3. Perintah Penting
+## Perintah
 
 ```bash
-composer setup          # install + key generate + migrate + npm install/build
-composer dev            # jalankan server + queue + pail + vite (concurrently)
-composer test           # config:clear lalu php artisan test
-vendor/bin/pint         # formatter/code style (jalankan sebelum commit)
-php artisan migrate     # migrasi database
-npm run build           # build aset frontend
+composer setup          # install + copy .env + key:generate + migrate --force + npm install + build
+composer dev            # concurrently serve + queue:listen --tries=1 + pail + vite (butuh node_modules)
+composer test           # config:clear + php artisan test
+vendor/bin/pint         # formatter — wajib sebelum commit
+npm run build           # vite build; dev: npm run dev
 ```
-
-Perintah artisan khusus proyek:
 
 ```bash
-php artisan app:muat-data-pelatihan [--dir=path]   # impor semua .xlsx folder data latih
-php artisan app:normalisasi-kontak-nomor           # normalisasi ulang nomor telepon tersimpan
+php artisan app:muat-data-pelatihan [--dir=path]  # default --dir=../data training (DI LUAR repo!)
+php artisan kontak:normalisasi-nomor                # re-normalisasi semua no_telepon
+php artisan db:seed --class=MasterDataSeeder        # taksonomi awal
 ```
 
-## 4. Struktur Direktori
-
-```
-app/
-├── Console/Commands/        # MuatDataPelatihan, NormalizeKontakNomor
-├── Filament/
-│   ├── Pages/               # ImportKontaks (wizard impor 3 langkah)
-│   ├── Resources/           # Kontaks, Perusahaans, Kegiatans, KategoriKegiatans (+Users)
-│   │   └── {Nama}/          # pola Filament v5: Schemas/, Tables/, Pages/
-│   └── Widgets/             # KontakStatsOverview, StatusVerifikasiChart, KontakPipeline
-├── Http/Controllers/        # KontakExportController (invokable, streaming CSV)
-├── Livewire/                # SanitizeUtf8State
-├── Models/                  # User, Perusahaan, Kontak, Kegiatan, KategoriKegiatan
-├── Policies/                # otorisasi per resource
-├── Providers/Filament/      # AdminPanelProvider
-├── Services/                # KontakImportService (inti logika impor)
-└── Support/                 # PhoneNormalizer, EventDetektor, KlasifikasiTabel,
-                             # KontakSmartSearch (helper murni/static)
-database/
-├── migrations/              # skema: users, perusahaans, kontaks, kegiatans, kategori_kegiatans
-└── seeders/                 # MasterDataSeeder (taksonomi dari KlasifikasiTabel)
-resources/css/filament/admin/theme.css   # tema panel
-routes/web.php               # hanya welcome + export route
-tests/{Unit,Feature}/        # PHPUnit
+Single-test / fokus (agent sering salah):
+```bash
+php artisan test --filter=PhoneNormalizerTest
+vendor/bin/phpunit tests/Unit/PhoneNormalizerTest.php --filter=test_is_valid
+php artisan test tests/Feature/KontakImportTest.php
 ```
 
-## 5. Model Data & Relasi
+## Konvensi Wajib
 
-- **User** — kolom `role` string: `admin` | `karyawan`. Method `isAdmin()`, `isKaryawan()`.
-- **KategoriKegiatan** `hasMany` **Kegiatan** `hasMany` **Kontak**
-- **Perusahaan** `hasMany` **Kontak**
-- **Kontak** `belongsTo` → Perusahaan, Kegiatan, KategoriKegiatan, User (`updated_by`)
-- Kolom penting Kontak:
-  - `no_telepon` — selalu ternormalisasi via mutator `setNoTeleponAttribute` (lihat §6).
-  - `status_format_valid` (bool) — apakah nomor lolos pola valid.
-  - `status_verifikasi` — enum-ish string, nilai termasuk `perlu_dicek`, `belum_direspon`, `sudah_dikirim`, `sudah_dicoba`, `belum_dicoba`.
-- `updated_by` diisi id user pada create/update (audit ringan).
+1. **Telepon** — hanya via `App\Support\PhoneNormalizer::normalize()`/`isValid()` (`^628\d{7,10}$` di `app/Support/PhoneNormalizer.php:40`). Mutator `Kontak::setNoTeleponAttribute` (`app/Models/Kontak.php:34`) simpan VALID sebagai `628…`, INVALID simpan apa adanya (spasi digabung) + `status_format_valid=false`. Jangan normalisasi manual, jangan set flag manual, selalu cek flag.
+2. **Kamus kanonik** — `App\Support\KlasifikasiTabel` satu-satunya sumber KATEGORI/PETAKAN_EVENT/SINONIM_PERUSAHAAN/JUNK. Dipakai EventDetektor, Seeder, KontakImportService, muat-data-pelatihan. Tambah data = edit konstanta di sana.
+3. **UTF-8** — data lama Windows-1252. Bersihkan via `cleanUtf8()` (`app/Services/KontakImportService.php:561`, `app/Livewire/SanitizeUtf8State.php:83`), jangan `trim()` charlist byte-wise (merusak UTF-8 tepi).
+4. **SanitizeUtf8State** — daftar di `AppServiceProvider::register()` (`app/Providers/AppServiceProvider.php:29`) BUKAN `boot()` (hook harus sebelum Livewire boot). Dual tugas: sanitasi dehydrate + tahan `__lazyLoad` duplikat (`call()` di `app/Livewire/SanitizeUtf8State.php:60`, race Livewire 4.4.x → 500 tanpa guard, lihat `LazyWidgetDoubleLoadTest`).
+5. **Filament v5** — tiap resource split `Schemas/`/`Tables/`/`Pages/`. Ikuti pola existing.
+6. **Policy** — `UserPolicy` admin-only; policy Kontak/Perusahaan/Kegiatan/KategoriKegiatan allow semua user panel (`admin`|`karyawan` setara). Export `GET /admin/kontak/export` cek `viewAny` manual.
+7. **Impor idempoten** — `firstOrCreate` + `KontakImportService::normalizeCompanyName()` (hapus PT/CV/dll, `app/Services/KontakImportService.php:597`).
+8. `league/csv` dipakai langsung tapi hanya transitif via `filament/actions` — jangan tambah dep tanpa kebutuhan.
 
-## 6. Konvensi Wajib (jangan dilanggar)
+## TALL / Livewire Perf (pragmatis)
 
-1. **Bahasa Indonesia** untuk nama domain (model, kolom, method UI) dan komentar kode. Contoh: `Kontak`, `perusahaan_id`, `status_format_valid`, `muatData`.
-2. **Nomor telepon Indonesia**: simpan polos tanpa tanda baca sebagai `628xxxxxxxxxx`.
-   - Normalisasi HANYA lewat `App\Support\PhoneNormalizer::normalize()` dan validasi via `PhoneNormalizer::isValid()` (pola `^628\d{7,10}$`).
-   - Model `Kontak` memakai **mutator** — set penulisan `'no_telepon' => $raw` otomatis dinormalisasi; jangan menormalkan manual sebelum assign ganda.
-3. **Kamus kanonik terpusat** di `App\Support\KlasifikasiTabel`: kategori event, petakan event→kategori, sinonim nama perusahaan, daftar junk words. Penambahan master data baru = edit konstanta di sana, bukan hard-code di service/seeder.
-4. **UTF-8 aman**: data file lama sering Windows-1252. Selalu bersihkan string dari eksternal via pattern `cleanUtf8()` (lihat `KontakImportService`) agar Livewire/JSON tidak gagal serialisasi. Jangan pakai `trim()` charlist multi-byte byte-wise — gunakan regex `\u` seperti di `cleanName()`.
-5. **Filament v5 structure**: resource dipisah per folder (`Schemas/`, `Tables/`, `Pages/`). Ikuti pola resource yang sudah ada saat membuat resource baru.
-6. **Otorisasi via Policy**: `UserPolicy` admin-only; resource lain (Kontak, Perusahaan, Kegiatan, KategoriKegiatan) terbuka untuk semua user panel (karyawan setara admin). Route export cek `viewAny` policy secara manual.
-7. **Impor idempoten**: gunakan `firstOrCreate`/pemetaan normalisasi (`normalizeCompanyName` menghapus PT/CV/dll) agar impor berulang tidak menduplikasi data.
+- Eloquent: selalu `with()` hindari N+1. Jangan query per-baris di `render()`/closure kolom — batch via `PetaNomorPerusahaan::ambil()` + `ListKontaks::petaNomorDipakai()` (`app/Support/PetaNomorPerusahaan.php:20`, `app/Filament/Resources/Kontaks/Pages/ListKontaks.php:43`).
+- Binding: `wire:model.blur` atau `wire:model.live.debounce.300ms`, jangan `wire:model` polos (spam request).
+- Form >3 field → `Livewire\Form` Form Object; validasi `#[Validate]` di properti, otorisasi `#[Authorize]`; PHP 8.3 Attributes (`#[Fillable]`/`#[Url]`) bila ada.
+- Navigasi `wire:navigate` untuk SPA; interaksi lokal (modal/dropdown) pakai Alpine tanpa round-trip.
+- Tailwind v4: `sm:/md:/lg:` + `dark:`, class rapi, tanpa inline style/`@apply` kecuali komponen berulang. Tulis lokasi file di atas tiap blok kode `// path/to/file.php`.
 
-## 7. Alur Import (konteks penting)
+## Kolom & Enum Kritis
 
-Wizard `ImportKontaks` (Livewire page) → `KontakImportService`:
+- `kontaks.status_verifikasi` enum DB (`2026_08_18_232941`): `terverifikasi` (default form) | `perlu_dicek` (impor) | `tidak_aktif` — tambah nilai = migrasi.
+- `kontaks.status_format_valid` bool auto mutator; `updated_by` FK users (audit).
+- `kegiatans.tanggal_mulai` nullable (`2026_08_20_000003`), ada `warna` di kegiatans+kategori (`2026_08_24_000000`).
 
-1. **extractRows()** — baca xlsx/xls/ods/csv/tsv; SEMUA sheet dipindai; header dideteksi fuzzy di baris manapun (alias ID/EN: "PIC", "No. HP", "Contact Person", dst); metadata event dari judul sheet + baris kepala via `EventDetektor` (event, kategori, tanggal, venue).
-2. **classify()** — status per baris: perusahaan `baru|cocok|junk`; kontak `dibuat|duplikat_telepon|duplikat_nama|duplikat_batch|data_tidak_lengkap` + alasan; nomor dinormalisasi dulu sebelum cek duplikat; dedup juga intra-batch.
-3. **save()** — satu transaksi DB; perusahaan dibuat dengan NAMA KANONIK; kegiatan/kategori via `firstOrCreate`; kontak baru berstatus `perlu_dicek`.
+## Alur Import
 
-Baris teknis/junk (checklist vendor, doorprize, dsb.) difilter via `JUNK_WORDS`.
+`Filament\Pages\ImportKontaks::analyze()` → preview → `saveImport()` → `KontakImportService`:
+1. `extractRows()` — xlsx/xls/ods/csv/tsv, semua sheet, header fuzzy (alias ID/EN, baris mana pun), metadata event via `EventDetektor`.
+2. `classify()` — `baru|cocok|junk` (perusahaan), `dibuat|duplikat_*|data_tidak_lengkap` (kontak) + alasan; nomor dinormalisasi dulu baru cek duplikat (intra-batch juga).
+3. `save()` — 1 transaksi; perusahaan pakai NAMA KANONIK; kegiatan/kategori `firstOrCreate`; kontak `perlu_dicek`. Junk via `JUNK_WORDS` (`app/Services/KontakImportService.php:34`) + `JUNK_COMPANY`.
 
-## 8. Pengujian
+## Pengujian
 
-- Jalankan: `composer test` (atau `php artisan test`).
-- **Unit**: `PhoneNormalizerTest`, `EventDetektorTest`, `KlasifikasiPerusahaanTest` — helper murni, cepat.
-- **Feature**: impor kontak (`KontakImportTest`), CRUD resource, role access (`RoleAccessTest`), seeder, command, widget dashboard, smart search.
-- Saat mengubah logika di `app/Support/*` atau `KontakImportService`, tambahkan/perbarui test terkait — area ini padat edge case (format nomor aneh, sheet teknis, encoding).
+- `composer test` = `phpunit.xml:26` `sqlite :memory:` + `CACHE_STORE=array` + `SESSION_DRIVER=array`. Suite ~40 detik.
+- Unit cepat: `PhoneNormalizerTest`, `EventDetektorTest`, `KlasifikasiPerusahaanTest`. Feature: `KontakImportTest`, CRUD, role, seeder, command, widget, smart search, lazy-guard.
+- Ubah `app/Support/*` atau `KontakImportService` wajib update test (edge: format nomor, sheet teknis, encoding).
 
-## 9. Catatan Lingkungan
+## Lingkungan & Gotcha
 
-- Default DB: **SQLite** (`DB_CONNECTION=sqlite`); sesi, cache, queue memakai driver `database`.
-- Panel admin butuh login (`->login()` di `AdminPanelProvider`).
-- Seed taksonomi awal: `php artisan db:seed --class=MasterDataSeeder`; data riil via `app:muat-data-pelatihan`.
-- Aset publik Filament sudah ter-publish di `public/js/filament` & `public/css/filament`.
-
-## 10. Gaya Kode
-
-- Ikuti PSR-12 + preset Laravel; format dengan `vendor/bin/pint`.
-- Dokumen-dokumen (docblock) ditulis bahasa Indonesia, sertakan `@param`/`@return` array-shape bila relevan.
-- Hindari menambah dependensi baru tanpa kebutuhan nyata; stack sudah mencukupi (spreadsheet, csv, filament).
+- Default `DB_CONNECTION=sqlite` (`config/database.php:20`), pragma `DB_BUSY_TIMEOUT=5000`/`DB_JOURNAL_MODE=WAL`/`DB_SYNCHRONOUS=NORMAL` (`config/database.php:43`). `.env.example` masih `mysql` — jangan ikuti.
+- `SESSION_DRIVER=database`, `CACHE_STORE=database`, `QUEUE_CONNECTION=database` (testing override ke array/sync).
+- Aset Filament ter-publish `public/js/filament` & `public/css/filament`; `vite.config.js:8` input `resources/css/app.css` + `resources/css/filament/admin/theme.css` + `resources/js/app.js`.
+- Deploy: `php artisan config:cache route:cache view:cache`, `composer install --no-dev --optimize-autoloader`, `APP_DEBUG=false`, OPcache.
+- CI/pre-commit tidak ada (cek `composer.json` scripts + `.github/` kosong) — verifikasi manual via `composer test` + `vendor/bin/pint`.

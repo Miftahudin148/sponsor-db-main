@@ -8,7 +8,6 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use UnitEnum;
 
 class ImportKontaks extends Page
 {
@@ -22,9 +21,16 @@ class ImportKontaks extends Page
 
     protected static ?string $title = 'Import Data Kontak & Perusahaan';
 
-    protected static UnitEnum|string|null $navigationGroup = 'Master Data';
+    /**
+     * Import diakses dari dalam fitur Kontak (tombol header daftar kontak),
+     * jadi halaman ini tidak muncul sebagai item navigasi tersendiri.
+     */
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
 
-    protected static ?int $navigationSort = 99;
+    protected static ?int $navigationSort = 2;
 
     public $file = null;
 
