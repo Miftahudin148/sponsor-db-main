@@ -33,6 +33,7 @@ class KontaksTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['perusahaan', 'kegiatan', 'kategoriKegiatan', 'updatedBy']))
             ->searchable(false)
             ->striped()
             ->header(fn (HasTable $livewire): View => view('filament.tables.kontak-summary', [

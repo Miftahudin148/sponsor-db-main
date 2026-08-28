@@ -31,17 +31,18 @@ class PetaNomorPerusahaan
             return [];
         }
 
-        $baris = Perusahaan::query()
-            ->join('kontaks', 'kontaks.perusahaan_id', '=', 'perusahaans.id')
-            ->whereIn('kontaks.no_telepon', $nomorDuplikat->all())
-            ->orderBy('perusahaans.nama_standar')
-            ->get(['kontaks.no_telepon as telepon', 'perusahaans.id as id_perusahaan', 'perusahaans.nama_standar']);
-
-        /** @var array<string, array<int, string>> $peta */
+        // Chunk whereIn untuk hindari batas variabel SQLite (999) bila duplikat banyak
         $peta = [];
+        foreach ($nomorDuplikat->chunk(900) as $chunk) {
+            $baris = Perusahaan::query()
+                ->join('kontaks', 'kontaks.perusahaan_id', '=', 'perusahaans.id')
+                ->whereIn('kontaks.no_telepon', $chunk->all())
+                ->orderBy('perusahaans.nama_standar')
+                ->get(['kontaks.no_telepon as telepon', 'perusahaans.id as id_perusahaan', 'perusahaans.nama_standar']);
 
-        foreach ($baris as $data) {
-            $peta[$data->telepon][$data->id_perusahaan] ??= $data->nama_standar;
+            foreach ($baris as $data) {
+                $peta[$data->telepon][$data->id_perusahaan] ??= $data->nama_standar;
+            }
         }
 
         ksort($peta);

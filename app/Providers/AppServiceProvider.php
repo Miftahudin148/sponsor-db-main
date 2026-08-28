@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Livewire\SanitizeUtf8State;
 use App\Models\KategoriKegiatan;
 use App\Models\Kegiatan;
 use App\Models\Kontak;
@@ -26,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
         // ComponentHookRegistry::boot(). Hook yang didaftarkan di boot()
         // justru muncul SETELAH library membuat listener mount/hydrate/dehydrate
         // sehingga hook TIDAK PERNAH terpasang pada komponen saat runtime.
-        Livewire::componentHook(new \App\Livewire\SanitizeUtf8State());
+        Livewire::componentHook(new SanitizeUtf8State);
     }
 
     public function boot(): void

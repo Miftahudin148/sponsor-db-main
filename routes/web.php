@@ -5,7 +5,7 @@ use Filament\Http\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/admin');
 });
 
 Route::middleware(['web', Authenticate::class])->get('/admin/kontak/export', KontakExportController::class)
