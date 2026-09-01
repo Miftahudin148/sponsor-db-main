@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\KategoriKegiatans\Tables;
 
+use App\Models\KategoriKegiatan;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -47,11 +48,13 @@ class KategoriKegiatansTable
             ->paginated([10, 25, 50])
             ->defaultPaginationPageOption(25)
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->visible(fn () => auth()->user()?->can('update', KategoriKegiatan::class) ?? false),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => auth()->user()?->can('deleteAny', KategoriKegiatan::class) ?? false),
                 ]),
             ])
             ->defaultSort('nama_kategori');

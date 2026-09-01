@@ -7,31 +7,33 @@ use App\Models\User;
 
 class PerusahaanPolicy
 {
-    /**
-     * Karyawan setara admin, kecuali tidak boleh menghapus (design.md §4).
-     */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can('perusahaan.view_any');
     }
 
     public function view(User $user, Perusahaan $perusahaan): bool
     {
-        return true;
+        return $user->can('perusahaan.view');
     }
 
     public function create(User $user): bool
     {
-        return true;
+        return $user->can('perusahaan.create');
     }
 
     public function update(User $user, Perusahaan $perusahaan): bool
     {
-        return true;
+        return $user->can('perusahaan.update');
     }
 
     public function delete(User $user, Perusahaan $perusahaan): bool
     {
-        return $user->isAdmin();
+        return $user->can('perusahaan.delete');
+    }
+
+    public function deleteAny(User $user): bool
+    {
+        return $user->can('perusahaan.delete');
     }
 }

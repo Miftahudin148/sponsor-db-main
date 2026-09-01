@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Kontaks\Pages;
 
 use App\Filament\Pages\ImportKontaks;
 use App\Filament\Resources\Kontaks\KontakResource;
+use App\Models\Kontak;
 use App\Support\PetaNomorPerusahaan;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
@@ -29,7 +30,8 @@ class ListKontaks extends ListRecords
                 ->label('Import Data')
                 ->icon(Heroicon::OutlinedArrowUpTray)
                 ->color('gray')
-                ->url(ImportKontaks::getUrl()),
+                ->url(ImportKontaks::getUrl())
+                ->visible(fn () => auth()->user()?->can('import', Kontak::class) ?? false),
             CreateAction::make(),
         ];
     }

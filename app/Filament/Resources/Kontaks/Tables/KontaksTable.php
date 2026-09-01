@@ -247,6 +247,7 @@ class KontaksTable
                     ->icon(Heroicon::OutlinedArrowDownTray)
                     ->color('gray')
                     ->openUrlInNewTab()
+                    ->visible(fn () => auth()->user()?->can('export', Kontak::class) ?? false)
                     ->url(fn (HasTable $livewire): string => route('kontaks.export', self::exportParams($livewire))),
             ])
             ->defaultSort('nama');
