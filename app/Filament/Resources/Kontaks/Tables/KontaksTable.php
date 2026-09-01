@@ -202,7 +202,7 @@ class KontaksTable
                             ->label('Kata kunci')
                             ->placeholder('Cari perusahaan, PIC, nomor, kegiatan, kategori...')
                             ->live()
-                            ->debounce(400),
+                            ->debounce(600),
                     ])
                     ->query(fn (Builder $query, array $data): Builder => filled(trim((string) ($data['q'] ?? '')))
                         ? app(KontakSmartSearch::class)->applyTo($query, trim((string) $data['q']))

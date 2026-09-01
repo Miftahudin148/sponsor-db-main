@@ -71,8 +71,8 @@ php artisan test tests/Feature/KontakImportTest.php
 
 ## Lingkungan & Gotcha
 
-- Default `DB_CONNECTION=sqlite` (`config/database.php:20`), pragma `DB_BUSY_TIMEOUT=5000`/`DB_JOURNAL_MODE=WAL`/`DB_SYNCHRONOUS=NORMAL` (`config/database.php:43`). `.env.example` masih `mysql` — jangan ikuti.
-- `SESSION_DRIVER=database`, `CACHE_STORE=database`, `QUEUE_CONNECTION=database` (testing override ke array/sync).
+- **Produksi VPS 50 user baca**: wajib `DB_CONNECTION=mysql` (`config/database.php:20`) + MySQL 8.x. SQLite (`DB_BUSY_TIMEOUT=5000`/`WAL` `config/database.php:43`) hanya untuk dev/test (`phpunit.xml:26` `:memory:`). `SESSION_DRIVER=database` aman di MySQL (row-lock), `CACHE_STORE=file` lebih ringan untuk 50 baca bersamaan (`Cache::remember` 60s di `KontakStatsOverview`, `KontakKategoriBarChart`, `TopEventBarChart`, `PetaNomorPerusahaan`), `QUEUE_CONNECTION=database` OK untuk baca.
+- `SESSION_DRIVER=database`, `CACHE_STORE=file` (prod) / `array` (testing override), `QUEUE_CONNECTION=database` (testing override ke `sync`).
 - Aset Filament ter-publish `public/js/filament` & `public/css/filament`; `vite.config.js:8` input `resources/css/app.css` + `resources/css/filament/admin/theme.css` + `resources/js/app.js`.
-- Deploy: `php artisan config:cache route:cache view:cache`, `composer install --no-dev --optimize-autoloader`, `APP_DEBUG=false`, OPcache.
+- Deploy VPS: `composer install --no-dev --optimize-autoloader`, `php artisan migrate --force`, `php artisan config:cache route:cache view:cache`, `APP_DEBUG=false`, OPcache on, `nginx + php-fpm` (jangan `php artisan serve`), `CACHE_STORE=file`.
 - CI/pre-commit tidak ada (cek `composer.json` scripts + `.github/` kosong) — verifikasi manual via `composer test` + `vendor/bin/pint`.

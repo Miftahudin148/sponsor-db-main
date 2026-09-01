@@ -47,12 +47,16 @@ class RoleAccessTest extends TestCase
         $kategori = KategoriKegiatan::factory()->create();
 
         $this->actingAs(User::factory()->karyawan()->create());
-        $this->assertFalse(auth()->user()->can('viewAny', KategoriKegiatan::class));
+        $this->assertTrue(auth()->user()->can('viewAny', KategoriKegiatan::class));
+        $this->assertTrue(auth()->user()->can('view', $kategori));
         $this->assertFalse(auth()->user()->can('create', KategoriKegiatan::class));
+        $this->assertFalse(auth()->user()->can('update', $kategori));
+        $this->assertFalse(auth()->user()->can('delete', $kategori));
 
         $this->actingAs(User::factory()->admin()->create());
         $this->assertTrue(auth()->user()->can('viewAny', KategoriKegiatan::class));
         $this->assertTrue(auth()->user()->can('view', $kategori));
+        $this->assertTrue(auth()->user()->can('create', KategoriKegiatan::class));
     }
 
     public function test_kegiatan_karyawan_hanya_lihat_admin_bisa_tulis(): void
@@ -74,10 +78,16 @@ class RoleAccessTest extends TestCase
     public function test_user_dan_kategori_hanya_admin(): void
     {
         $target = User::factory()->create();
+        $karyawan = User::factory()->karyawan()->create();
 
-        $this->actingAs(User::factory()->karyawan()->create());
-        $this->assertFalse(auth()->user()->can('viewAny', User::class));
+        $this->actingAs($karyawan);
+        // karyawan bisa akses list (ter-scope ke diri sendiri) tapi tidak bisa lihat user lain
+        $this->assertTrue(auth()->user()->can('viewAny', User::class));
         $this->assertFalse(auth()->user()->can('view', $target));
+        $this->assertTrue(auth()->user()->can('view', $karyawan));
+        $this->assertTrue(auth()->user()->can('update', $karyawan));
+        $this->assertFalse(auth()->user()->can('delete', $target));
+        $this->assertFalse(auth()->user()->can('delete', $karyawan));
 
         $this->actingAs(User::factory()->admin()->create());
         $this->assertTrue(auth()->user()->can('viewAny', User::class));

@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Models\KategoriKegiatan;
 use App\Support\KlasifikasiTabel;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class KontakKategoriBarChart extends ChartWidget
@@ -28,53 +29,56 @@ class KontakKategoriBarChart extends ChartWidget
 
     protected function getData(): array
     {
-        // Eager-free agregat: hitung event per kategori via LEFT JOIN agar kategori tanpa event tetap muncul
-        $rows = KategoriKegiatan::query()
-            ->leftJoin('kegiatans', 'kegiatans.kategori_kegiatan_id', '=', 'kategori_kegiatans.id')
-            ->select('kategori_kegiatans.id', 'kategori_kegiatans.nama_kategori', DB::raw('count(kegiatans.id) as event_count'))
-            ->groupBy('kategori_kegiatans.id', 'kategori_kegiatans.nama_kategori')
-            ->orderByDesc('event_count')
-            ->orderBy('kategori_kegiatans.nama_kategori')
-            ->get();
+        // Cache 60 detik untuk 50 user baca bersamaan
+        return Cache::remember('icm:chart_kategori', 60, function (): array {
+            // Eager-free agregat: hitung event per kategori via LEFT JOIN agar kategori tanpa event tetap muncul
+            $rows = KategoriKegiatan::query()
+                ->leftJoin('kegiatans', 'kegiatans.kategori_kegiatan_id', '=', 'kategori_kegiatans.id')
+                ->select('kategori_kegiatans.id', 'kategori_kegiatans.nama_kategori', DB::raw('count(kegiatans.id) as event_count'))
+                ->groupBy('kategori_kegiatans.id', 'kategori_kegiatans.nama_kategori')
+                ->orderByDesc('event_count')
+                ->orderBy('kategori_kegiatans.nama_kategori')
+                ->get();
 
-        // Fallback bila belum ada kategori master
-        if ($rows->isEmpty()) {
-            return [
-                'labels' => [],
-                'datasets' => [['label' => 'Jumlah Event', 'data' => []]],
-            ];
-        }
-
-        $labels = $rows->pluck('nama_kategori')->all();
-        $data = $rows->pluck('event_count')->map(fn ($v) => (int) $v)->all();
-
-        // Warna bervariatif — pakai palet kanonik KlasifikasiTabel agar konsisten dengan badge kategori
-        $colors = [];
-        $borders = [];
-        foreach ($rows as $row) {
-            $hex = KlasifikasiTabel::warnaKategori($row->nama_kategori);
-            if ($hex === null || preg_match('/^#[0-9A-Fa-f]{6}$/', $hex) !== 1) {
-                // fallback palet Tailwind bila warna kategori tidak terdefinisi
-                $hex = ['#1E2A4A', '#0EA5E9', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#EF4444', '#14B8A6'][$row->id % 8];
+            // Fallback bila belum ada kategori master
+            if ($rows->isEmpty()) {
+                return [
+                    'labels' => [],
+                    'datasets' => [['label' => 'Jumlah Event', 'data' => []]],
+                ];
             }
-            $colors[] = $hex;
-            $borders[] = $hex;
-        }
 
-        return [
-            'labels' => $labels,
-            'datasets' => [
-                [
-                    'label' => 'Jumlah Event',
-                    'data' => $data,
-                    'backgroundColor' => $colors,
-                    'borderColor' => $borders,
-                    'borderWidth' => 1,
-                    'borderRadius' => 6,
-                    'borderSkipped' => false,
+            $labels = $rows->pluck('nama_kategori')->all();
+            $data = $rows->pluck('event_count')->map(fn ($v) => (int) $v)->all();
+
+            // Warna bervariatif — pakai palet kanonik KlasifikasiTabel agar konsisten dengan badge kategori
+            $colors = [];
+            $borders = [];
+            foreach ($rows as $row) {
+                $hex = KlasifikasiTabel::warnaKategori($row->nama_kategori);
+                if ($hex === null || preg_match('/^#[0-9A-Fa-f]{6}$/', $hex) !== 1) {
+                    // fallback palet Tailwind bila warna kategori tidak terdefinisi
+                    $hex = ['#1E2A4A', '#0EA5E9', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#EF4444', '#14B8A6'][$row->id % 8];
+                }
+                $colors[] = $hex;
+                $borders[] = $hex;
+            }
+
+            return [
+                'labels' => $labels,
+                'datasets' => [
+                    [
+                        'label' => 'Jumlah Event',
+                        'data' => $data,
+                        'backgroundColor' => $colors,
+                        'borderColor' => $borders,
+                        'borderWidth' => 1,
+                        'borderRadius' => 6,
+                        'borderSkipped' => false,
+                    ],
                 ],
-            ],
-        ];
+            ];
+        });
     }
 
     protected function getOptions(): array

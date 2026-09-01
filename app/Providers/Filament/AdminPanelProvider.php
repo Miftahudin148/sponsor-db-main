@@ -2,10 +2,13 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Auth\CustomRegister;
+use App\Filament\Pages\ProfilSaya;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -26,6 +29,8 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->registration(CustomRegister::class)
+            ->passwordReset()
             ->brandName('ICM Sponsor')
             ->colors([
                 'primary' => Color::hex('#1E2A4A'),
@@ -35,10 +40,18 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarFullyCollapsibleOnDesktop()
             ->sidebarWidth('16.5rem')
             ->collapsedSidebarWidth('4rem')
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label('Profil Saya')
+                    ->url(fn (): string => ProfilSaya::getUrl())
+                    ->icon('heroicon-o-user-circle')
+                    ->visible(fn (): bool => auth()->check()),
+            ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
                 Dashboard::class,
+                ProfilSaya::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
