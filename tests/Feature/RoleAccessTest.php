@@ -26,8 +26,14 @@ class RoleAccessTest extends TestCase
 
         $this->actingAs($karyawan);
         $this->assertTrue(auth()->user()->can('viewAny', Kontak::class));
-        $this->assertTrue(auth()->user()->can('create', Kontak::class));
-        $this->assertTrue(auth()->user()->can('create', Perusahaan::class));
+        $this->assertTrue(auth()->user()->can('view', Kontak::factory()->create()));
+        $this->assertTrue(auth()->user()->can('export', Kontak::class));
+        $this->assertFalse(auth()->user()->can('create', Kontak::class));
+        $this->assertFalse(auth()->user()->can('import', Kontak::class));
+        $this->assertFalse(auth()->user()->can('create', Perusahaan::class));
+        // per-karyawan: beri hak create
+        $karyawan->givePermissionTo('kontak.create');
+        $this->assertTrue($karyawan->fresh()->can('create', Kontak::class));
     }
 
     public function test_karyawan_tidak_bisa_hapus_perusahaan(): void

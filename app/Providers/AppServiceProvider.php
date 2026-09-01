@@ -47,6 +47,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Kontak::class, KontakPolicy::class);
         Gate::policy(Perusahaan::class, PerusahaanPolicy::class);
 
+        // Admin super-bypass: kalau sudah isAdmin, lewati permission check granular
+        Gate::before(fn (User $user, string $ability) => $user->isAdmin() ? true : null);
+
         // Invalidate cache 60 detik untuk 50 reader — stale max 60s masih aman
         $forgetIcm = fn (): \Closure => function (): void {
             Cache::forget('icm:stats_overview');

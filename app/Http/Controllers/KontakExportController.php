@@ -11,8 +11,8 @@ class KontakExportController extends Controller
 {
     public function __invoke(Request $request, KontakSmartSearch $smartSearch): StreamedResponse
     {
-        if (! $request->user()?->can('viewAny', Kontak::class)) {
-            abort(403);
+        if (! $request->user()?->can('export', Kontak::class)) {
+            abort(403, 'Tidak punya hak export');
         }
 
         $query = Kontak::query()

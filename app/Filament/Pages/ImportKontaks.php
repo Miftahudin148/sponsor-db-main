@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Kontak;
 use App\Services\KontakImportService;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -20,6 +21,11 @@ class ImportKontaks extends Page
     protected static ?string $navigationLabel = 'Import Data';
 
     protected static ?string $title = 'Import Data Kontak & Perusahaan';
+
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->can('import', Kontak::class) ?? false;
+    }
 
     /**
      * Import diakses dari dalam fitur Kontak (tombol header daftar kontak),
