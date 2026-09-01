@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Support\PhoneNormalizer;
@@ -7,10 +9,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Kontak extends Model
 {
     use HasFactory;
+    use LogsActivity;
 
     protected $fillable = [
         'perusahaan_id',
@@ -28,6 +33,15 @@ class Kontak extends Model
         return [
             'status_format_valid' => 'boolean',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['perusahaan_id', 'kegiatan_id', 'kategori_kegiatan_id', 'nama', 'no_telepon', 'status_verifikasi'])
+            ->logOnlyDirty()
+            ->useLogName('kontak')
+            ->dontSubmitEmptyLogs();
     }
 
     public function setNoTeleponAttribute($value): void

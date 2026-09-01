@@ -9,6 +9,7 @@ use App\Models\Perusahaan;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Facades\Cache;
 
 class KontakStatsOverview extends StatsOverviewWidget
 {
@@ -20,18 +21,32 @@ class KontakStatsOverview extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        // 3 count ringan master + 1 agregat tunggal untuk semua metrik kontak (hindari 6 query terpisah)
-        $totalPerusahaan = Perusahaan::count();
-        $totalKegiatan = Kegiatan::count();
-        $totalKategori = KategoriKegiatan::count();
+        // Cache 60 detik untuk 50 user baca bersamaan — hindari 4 query agregat tiap F5
+        $cached = Cache::remember('icm:stats_overview', 60, function (): array {
+            $totalPerusahaan = Perusahaan::count();
+            $totalKegiatan = Kegiatan::count();
+            $totalKategori = KategoriKegiatan::count();
 
-        $aggr = Kontak::query()->selectRaw(implode(', ', [
-            'count(*) as total',
-            'sum(case when status_format_valid = 1 then 1 else 0 end) as valid',
-            "sum(case when status_verifikasi = 'terverifikasi' then 1 else 0 end) as terverifikasi",
-            "sum(case when status_verifikasi = 'perlu_dicek' then 1 else 0 end) as perlu_dicek",
-            "sum(case when status_verifikasi = 'tidak_aktif' then 1 else 0 end) as tidak_aktif",
-        ]))->first();
+            $aggr = Kontak::query()->selectRaw(implode(', ', [
+                'count(*) as total',
+                'sum(case when status_format_valid = 1 then 1 else 0 end) as valid',
+                "sum(case when status_verifikasi = 'terverifikasi' then 1 else 0 end) as terverifikasi",
+                "sum(case when status_verifikasi = 'perlu_dicek' then 1 else 0 end) as perlu_dicek",
+                "sum(case when status_verifikasi = 'tidak_aktif' then 1 else 0 end) as tidak_aktif",
+            ]))->first();
+
+            return [
+                'totalPerusahaan' => $totalPerusahaan,
+                'totalKegiatan' => $totalKegiatan,
+                'totalKategori' => $totalKategori,
+                'aggr' => $aggr,
+            ];
+        });
+
+        $totalPerusahaan = $cached['totalPerusahaan'];
+        $totalKegiatan = $cached['totalKegiatan'];
+        $totalKategori = $cached['totalKategori'];
+        $aggr = $cached['aggr'];
 
         $totalKontak = (int) ($aggr->total ?? 0);
         $validHp = (int) ($aggr->valid ?? 0);

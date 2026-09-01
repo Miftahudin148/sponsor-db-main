@@ -6,14 +6,17 @@ use App\Models\User;
 
 class KategoriKegiatanPolicy
 {
+    /**
+     * Karyawan boleh melihat kategori (view only), admin penuh — selaras dengan KegiatanPolicy.
+     */
     public function viewAny(User $user): bool
     {
-        return $user->isAdmin();
+        return true;
     }
 
     public function view(User $user): bool
     {
-        return $user->isAdmin();
+        return true;
     }
 
     public function create(User $user): bool

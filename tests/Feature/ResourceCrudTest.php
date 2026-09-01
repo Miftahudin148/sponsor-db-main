@@ -74,9 +74,9 @@ class ResourceCrudTest extends TestCase
         $this->actingAs(User::factory()->karyawan()->create());
 
         $this->assertFalse(KategoriKegiatanResource::canCreate());
-        $this->assertFalse(KategoriKegiatanResource::canViewAny());
+        $this->assertTrue(KategoriKegiatanResource::canViewAny());
 
-        Livewire::test(ListKategoriKegiatans::class)->assertForbidden();
+        Livewire::test(ListKategoriKegiatans::class)->assertSuccessful();
         Livewire::test(CreateKategoriKegiatan::class)->assertForbidden();
     }
 

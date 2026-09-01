@@ -8,9 +8,12 @@
     "require": {
         "php": "^8.2",
         "filament/filament": "^5.7",
+        "lab404/laravel-impersonate": "*",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "phpoffice/phpspreadsheet": "^5.9"
+        "phpoffice/phpspreadsheet": "^5.9",
+        "spatie/laravel-activitylog": "^4.12",
+        "spatie/laravel-permission": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
