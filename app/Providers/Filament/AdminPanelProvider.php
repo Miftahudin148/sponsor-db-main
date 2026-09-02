@@ -30,7 +30,6 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->registration(CustomRegister::class)
-            ->passwordReset()
             ->brandName('ICM Sponsor')
             ->colors([
                 'primary' => Color::hex('#1E2A4A'),

@@ -57,16 +57,6 @@ class UserForm
                             ->maxLength(255)
                             ->placeholder('Budi Santoso'),
 
-                        TextInput::make('nip')
-                            ->label('NIP')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(50)
-                            ->placeholder('198001012005011001')
-                            ->helperText(fn () => auth()->user()?->isAdmin() ? 'Nomor Induk Pegawai — unik' : 'Hubungi Admin untuk ubah NIP')
-                            ->disabled(fn () => ! (bool) auth()->user()?->isAdmin())
-                            ->dehydrated(fn () => (bool) auth()->user()?->isAdmin()),
-
                         TextInput::make('email')
                             ->label('Email')
                             ->email()

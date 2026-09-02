@@ -41,12 +41,6 @@ class CustomRegister extends Register
                     ->maxLength(255)
                     ->autofocus()
                     ->placeholder('Budi Santoso'),
-                TextInput::make('nip')
-                    ->label('NIP')
-                    ->required()
-                    ->maxLength(50)
-                    ->unique($this->getUserModel())
-                    ->placeholder('198001012005011001'),
                 TextInput::make('email')
                     ->label('Email')
                     ->email()

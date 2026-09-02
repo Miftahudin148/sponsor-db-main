@@ -22,9 +22,6 @@
             <div class="text-center sm:text-left">
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Halo, {{ explode(' ', $user->name)[0] }} 👋</h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{ $user->email }} · {{ $user->divisi?->name ?? '-' }}</p>
-                @if($user->nip)
-                    <span class="mt-2 inline-flex rounded-full bg-gray-100 px-2.5 py-1 text-xs font-mono dark:bg-gray-700">NIP {{ $user->nip }}</span>
-                @endif
             </div>
             <div class="ml-auto hidden items-center gap-2 sm:flex">
                 <span class="rounded-full px-3 py-1 text-xs font-medium {{ $user->is_active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30' : 'bg-red-50 text-red-700' }}">{{ $user->is_active ? 'Aktif' : 'Nonaktif' }}</span>
@@ -32,7 +29,7 @@
             </div>
         </div>
         <p class="mt-4 rounded-2xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
-            <strong>Tips:</strong> Klik foto untuk <strong>atur posisi & bentuk lingkaran manual</strong> sebelum simpan. Foto otomatis di-resize ke 400px. <strong>NIP / DIVISI</strong> hanya bisa diubah Admin.
+            <strong>Tips:</strong> Klik foto untuk <strong>atur posisi & bentuk lingkaran manual</strong> sebelum simpan. Foto otomatis di-resize ke 400px. <strong>DIVISI</strong> hanya bisa diubah Admin.
         </p>
     </div>
 
