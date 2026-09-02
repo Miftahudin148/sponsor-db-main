@@ -154,6 +154,35 @@
     display: none !important;
 }
 
+/* NProgress custom ICM — top bar 4px, fixed, GPU-accelerated */
+#icm-nprogress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 4px;
+    z-index: 99999 !important;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 150ms ease;
+}
+#icm-nprogress.icm-busy {
+    opacity: 1 !important;
+}
+#icm-nprogress .icm-bar {
+    height: 100%;
+    width: 100%;
+    background: #0EA5E9 !important;
+    transform: translate3d(-100%, 0, 0);
+    transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px #0EA5E9, 0 0 4px #0EA5E9 !important;
+}
+.dark #icm-nprogress .icm-bar {
+    background: #38BDF8 !important;
+    box-shadow: 0 0 10px #38BDF8, 0 0 4px #38BDF8 !important;
+}
+
 /* Hide Livewire default NProgress (use custom ICM bar) */
 #nprogress {
     display: none !important;
