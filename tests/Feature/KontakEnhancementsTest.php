@@ -187,7 +187,6 @@ class KontakEnhancementsTest extends TestCase
             'no_telepon',
             'kegiatan.nama_event',
             'kategoriKegiatan.nama_kategori',
-            'status_format_valid',
             'status_verifikasi',
             'updatedBy.name',
         ] as $columnName) {

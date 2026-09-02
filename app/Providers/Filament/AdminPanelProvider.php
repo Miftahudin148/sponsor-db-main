@@ -36,7 +36,8 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::hex('#1E2A4A'),
             ])
             ->font('Fira Sans')
-            ->viteTheme('resources/css/filament/admin/theme.css')
+            ->spa()
+            ->viteTheme(['resources/css/filament/admin/theme.css', 'resources/js/app.js'])
             ->sidebarFullyCollapsibleOnDesktop()
             ->sidebarWidth('16.5rem')
             ->collapsedSidebarWidth('4rem')

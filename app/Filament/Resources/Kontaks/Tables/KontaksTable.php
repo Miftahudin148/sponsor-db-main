@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Filament\Resources\Kontaks\Tables;
 
 use App\Filament\Pages\ImportKontaks;
@@ -7,16 +9,16 @@ use App\Models\Kontak;
 use App\Support\KontakSmartSearch;
 use App\Support\PetaNomorPerusahaan;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Enums\IconPosition;
-use Filament\Support\Enums\IconSize;
 use Filament\Support\Enums\TextSize;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\ColumnManagerLayout;
@@ -33,6 +35,7 @@ class KontaksTable
     public static function configure(Table $table): Table
     {
         return $table
+            // Eager load anti N+1, withCount siap jika perlu agregat
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['perusahaan', 'kegiatan', 'kategoriKegiatan', 'updatedBy']))
             ->searchable(false)
             ->striped()
@@ -45,14 +48,19 @@ class KontaksTable
             ->columnManagerColumns(2)
             ->reorderableColumns()
             ->recordClasses(function (Kontak $record, HasTable $livewire): ?string {
-                // Sorotan nomor ganda (admin) lebih penting daripada pewarnaan
-                // baris menurut kegiatan/kategori.
-                if (auth()->user()?->isAdmin()
-                    && PetaNomorPerusahaan::untukKontak($record, $livewire->petaNomorDipakai()) !== []) {
+                // Duplikat prioritas danger (admin)
+                if (auth()->user()?->isAdmin() && PetaNomorPerusahaan::untukKontak($record, $livewire->petaNomorDipakai()) !== []) {
                     return 'bg-danger-500/10 dark:bg-danger-500/20';
                 }
+                $pastel = match ($record->status_verifikasi) {
+                    'perlu_dicek' => 'bg-amber-50/60 dark:bg-amber-950/20',
+                    'tidak_aktif' => 'bg-rose-50/60 dark:bg-rose-950/20',
+                    'terverifikasi' => 'bg-emerald-50/40 dark:bg-emerald-950/10',
+                    default => null,
+                };
+                $warna = self::kelasWarnaBaris(self::warnaEfektifBaris($record));
 
-                return self::kelasWarnaBaris(self::warnaEfektifBaris($record));
+                return trim(($pastel ?? '').' '.($warna ?? ''));
             })
             ->emptyStateHeading('Belum ada kontak')
             ->emptyStateDescription('Mulai dengan mengimpor file kontak sponsor (Excel/CSV) atau membuat kontak baru satu per satu.')
@@ -75,19 +83,20 @@ class KontaksTable
                 TextColumn::make('perusahaan.nama_standar')
                     ->label('Nama Perusahaan')
                     ->size(TextSize::Small)
-                    ->weight('medium')
+                    ->weight('bold')
+                    ->color('gray')
+                    ->extraAttributes(['class' => 'text-slate-900 dark:text-white'])
                     ->searchable()
                     ->sortable()
-                    ->limit(42)
+                    ->limit(32)
                     ->tooltip(fn (Kontak $record): string => $record->perusahaan?->nama_standar ?? '')
                     ->toggleable(),
                 TextColumn::make('nama')
                     ->label('PIC')
                     ->size(TextSize::Small)
-                    ->description(fn (Kontak $record): ?string => $record->perusahaan?->industri)
                     ->searchable()
                     ->sortable()
-                    ->weight('semibold')
+                    ->weight('medium')
                     ->limit(28)
                     ->tooltip(fn (Kontak $record): string => $record->nama ?? '')
                     ->toggleable(),
@@ -160,14 +169,6 @@ class KontaksTable
                     })
                     ->visible(fn (HasTable $livewire): bool => filled(trim((string) ($livewire->getTableFilterState('cari')['q'] ?? ''))))
                     ->toggleable(),
-                IconColumn::make('status_format_valid')
-                    ->label('Valid')
-                    ->boolean()
-                    ->size(IconSize::ExtraSmall)
-                    ->trueIcon('heroicon-o-check-circle')
-                    ->falseIcon('heroicon-o-x-circle')
-                    ->extraAttributes(['style' => 'min-width: 3rem'])
-                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('status_verifikasi')
                     ->label('Status')
                     ->badge()
@@ -209,17 +210,53 @@ class KontaksTable
                         : $query),
                 SelectFilter::make('kegiatan_id')
                     ->label('Kegiatan')
-                    ->relationship('kegiatan', 'nama_event'),
+                    ->relationship('kegiatan', 'nama_event')
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->modifyFormFieldUsing(fn (Select $field) => $field->extraAttributes(['class' => 'fi-filter-kegiatan-compact']))
+                    ->indicateUsing(function (array $data, array $state): ?array {
+                        $vals = $state['values'] ?? $state['value'] ?? $data['values'] ?? $data['value'] ?? [];
+                        $vals = is_array($vals) ? array_filter($vals) : array_filter([$vals]);
+                        if (blank($vals)) {
+                            return null;
+                        }
+
+                        return ['Kegiatan: '.count($vals).' terpilih'];
+                    }),
                 SelectFilter::make('kategori_kegiatan_id')
                     ->label('Kategori')
-                    ->relationship('kategoriKegiatan', 'nama_kategori'),
+                    ->relationship('kategoriKegiatan', 'nama_kategori')
+                    ->multiple()
+                    ->preload()
+                    ->searchable()
+                    ->modifyFormFieldUsing(fn (Select $field) => $field->extraAttributes(['class' => 'fi-filter-kategori-compact']))
+                    ->indicateUsing(function (array $data, array $state): ?array {
+                        $vals = $state['values'] ?? $state['value'] ?? $data['values'] ?? $data['value'] ?? [];
+                        $vals = is_array($vals) ? array_filter($vals) : array_filter([$vals]);
+                        if (blank($vals)) {
+                            return null;
+                        }
+
+                        return ['Kategori: '.count($vals).' terpilih'];
+                    }),
                 SelectFilter::make('status_verifikasi')
                     ->label('Status')
+                    ->multiple()
                     ->options([
                         'terverifikasi' => 'Terverifikasi',
                         'perlu_dicek' => 'Perlu dicek',
                         'tidak_aktif' => 'Tidak aktif',
-                    ]),
+                    ])
+                    ->indicateUsing(function (array $data, array $state): ?array {
+                        $vals = $state['values'] ?? $state['value'] ?? $data['values'] ?? $data['value'] ?? [];
+                        $vals = is_array($vals) ? array_filter($vals) : array_filter([$vals]);
+                        if (blank($vals)) {
+                            return null;
+                        }
+
+                        return ['Status: '.count($vals).' terpilih'];
+                    }),
             ])
             ->filtersLayout(FiltersLayout::AboveContent)
             ->deferFilters(false)
@@ -227,16 +264,17 @@ class KontaksTable
             ->paginated([25, 50, 100, 250, 500])
             ->defaultPaginationPageOption(50)
             ->recordActions([
-                ViewAction::make()
-                    ->slideOver(),
-                Action::make('whatsapp')
-                    ->label('Kirim WhatsApp')
-                    ->icon(Heroicon::OutlinedChatBubbleLeftRight)
-                    ->color('success')
-                    ->url(fn (Kontak $record): string => self::whatsappUrl($record))
-                    ->openUrlInNewTab()
-                    ->visible(fn (Kontak $record): bool => filled($record->no_telepon)),
-                EditAction::make(),
+                ActionGroup::make([
+                    ViewAction::make()->slideOver(),
+                    EditAction::make(),
+                    Action::make('whatsapp')
+                        ->label('Kirim WhatsApp')
+                        ->icon(Heroicon::OutlinedChatBubbleLeftRight)
+                        ->color('success')
+                        ->url(fn (Kontak $record): string => self::whatsappUrl($record))
+                        ->openUrlInNewTab()
+                        ->visible(fn (Kontak $record): bool => filled($record->no_telepon)),
+                ])->icon(Heroicon::OutlinedEllipsisHorizontal)->color('gray')->tooltip('Aksi'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -379,9 +417,17 @@ class KontaksTable
             'kegiatan_id' => 'kegiatan_id',
             'kategori_kegiatan_id' => 'kategori_kegiatan_id',
         ] as $queryKey => $filterName) {
-            $value = (string) (data_get($livewire->getTableFilterState($filterName), 'value') ?? '');
-            if ($value !== '') {
-                $params[$queryKey] = $value;
+            $raw = data_get($livewire->getTableFilterState($filterName), 'values') ?? data_get($livewire->getTableFilterState($filterName), 'value') ?? null;
+            if (is_array($raw)) {
+                $filtered = array_values(array_filter($raw, fn ($v) => $v !== '' && $v !== null));
+                if ($filtered !== []) {
+                    $params[$queryKey] = $filtered;
+                }
+            } else {
+                $value = (string) ($raw ?? '');
+                if ($value !== '') {
+                    $params[$queryKey] = $value;
+                }
             }
         }
 

@@ -49,7 +49,7 @@ class KategoriKegiatansTable
             ->defaultPaginationPageOption(25)
             ->recordActions([
                 EditAction::make()
-                    ->visible(fn () => auth()->user()?->can('update', KategoriKegiatan::class) ?? false),
+                    ->visible(fn (KategoriKegiatan $record) => auth()->user()?->can('update', $record) ?? false),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

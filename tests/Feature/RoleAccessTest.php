@@ -8,6 +8,7 @@ use App\Models\Kontak;
 use App\Models\Perusahaan;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class RoleAccessTest extends TestCase
@@ -31,8 +32,8 @@ class RoleAccessTest extends TestCase
         $this->assertFalse(auth()->user()->can('create', Kontak::class));
         $this->assertFalse(auth()->user()->can('import', Kontak::class));
         $this->assertFalse(auth()->user()->can('create', Perusahaan::class));
-        // per-karyawan: beri hak create
-        $karyawan->givePermissionTo('kontak.create');
+        // per-role: beri hak create ke role karyawan
+        Role::findByName('karyawan')->givePermissionTo('kontak.create');
         $this->assertTrue($karyawan->fresh()->can('create', Kontak::class));
     }
 

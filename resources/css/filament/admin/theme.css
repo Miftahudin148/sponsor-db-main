@@ -141,3 +141,52 @@
     margin: 0.75rem 0.5rem 0.5rem;
     row-gap: 0.5rem;
 }
+
+/* Filter Kegiatan/Kategori multi — clamp tag agar tidak mekar ke bawah */
+.fi-filter-kegiatan-compact .fi-select-input-value-badges-ctn,
+.fi-filter-kategori-compact .fi-select-input-value-badges-ctn {
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    max-height: 38px;
+}
+.fi-filter-kegiatan-compact .fi-select-input-value-badges-ctn .fi-badge:nth-child(n+3),
+.fi-filter-kategori-compact .fi-select-input-value-badges-ctn .fi-badge:nth-child(n+3) {
+    display: none !important;
+}
+
+/* Hide Livewire default NProgress (use custom ICM bar) */
+#nprogress {
+    display: none !important;
+}
+
+/* NProgress custom ICM — top bar 3px #1E2A4A, fixed, GPU-accel, no layout shift */
+#icm-nprogress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+}
+#icm-nprogress.icm-busy {
+    opacity: 1;
+}
+#icm-nprogress .icm-bar {
+    height: 100%;
+    width: 100%;
+    background: #1E2A4A;
+    transform: translate3d(-100%, 0, 0);
+    transition: transform 200ms ease;
+    box-shadow: 0 0 8px rgba(30, 42, 74, 0.6), 0 0 4px rgba(30, 42, 74, 0.4);
+}
+.dark #icm-nprogress .icm-bar {
+    background: #2E3A6A;
+    box-shadow: 0 0 10px rgba(94, 122, 255, 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+    #icm-nprogress .icm-bar {
+        transition: none;
+    }
+}
