@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Auth\CustomRegister;
+use App\Filament\Pages\Auth\CustomRegister;
 use App\Filament\Pages\ProfilSaya;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -30,13 +30,13 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->registration(CustomRegister::class)
-            ->passwordReset()
             ->brandName('ICM Sponsor')
             ->colors([
                 'primary' => Color::hex('#1E2A4A'),
             ])
             ->font('Fira Sans')
-            ->viteTheme('resources/css/filament/admin/theme.css')
+            ->spa()
+            ->viteTheme(['resources/css/filament/admin/theme.css', 'resources/js/app.js'])
             ->sidebarFullyCollapsibleOnDesktop()
             ->sidebarWidth('16.5rem')
             ->collapsedSidebarWidth('4rem')

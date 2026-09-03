@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Livewire\SanitizeUtf8State;
 use App\Models\KategoriKegiatan;
 use App\Models\Kegiatan;
 use App\Models\Kontak;
@@ -14,6 +13,7 @@ use App\Policies\KegiatanPolicy;
 use App\Policies\KontakPolicy;
 use App\Policies\PerusahaanPolicy;
 use App\Policies\UserPolicy;
+use App\Support\Hooks\SanitizeUtf8State;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
 use Illuminate\Support\Facades\Cache;

@@ -37,13 +37,6 @@ class UsersTable
                     ->sortable()
                     ->weight('medium'),
 
-                TextColumn::make('nip')
-                    ->label('NIP')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->toggleable(),
-
                 TextColumn::make('email')
                     ->label('Email')
                     ->searchable()

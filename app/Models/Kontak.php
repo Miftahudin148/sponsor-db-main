@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Services\PetaNomorPerusahaan;
 use App\Support\PhoneNormalizer;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -77,22 +77,14 @@ class Kontak extends Model
     }
 
     /**
-     * Nama perusahaan lain yang memakai nomor telepon yang sama.
-     * Dipakai untuk flag anomali di UI admin.
+     * @deprecated pakai PetaNomorPerusahaan::untukKontak() — cache 60 detik anti N+1
      *
      * @return array<int, string>
      */
     public function perusahaanLainDenganNomorSama(): array
     {
-        if (blank($this->no_telepon)) {
-            return [];
-        }
-
-        return Perusahaan::query()
-            ->whereHas('kontaks', fn (Builder $query): Builder => $query->where('no_telepon', $this->no_telepon))
-            ->whereKeyNot($this->perusahaan_id)
-            ->pluck('nama_standar')
-            ->all();
+        // ponytail: single cached map, not per-row query
+        return PetaNomorPerusahaan::untukKontak($this, app(PetaNomorPerusahaan::class)->ambil());
     }
 
     public function updatedBy(): BelongsTo

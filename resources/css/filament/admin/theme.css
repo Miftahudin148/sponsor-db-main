@@ -141,3 +141,38 @@
     margin: 0.75rem 0.5rem 0.5rem;
     row-gap: 0.5rem;
 }
+
+/* Filter Kegiatan/Kategori multi — clamp tag agar tidak mekar ke bawah */
+.fi-filter-kegiatan-compact .fi-select-input-value-badges-ctn,
+.fi-filter-kategori-compact .fi-select-input-value-badges-ctn {
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    max-height: 38px;
+}
+.fi-filter-kegiatan-compact .fi-select-input-value-badges-ctn .fi-badge:nth-child(n+3),
+.fi-filter-kategori-compact .fi-select-input-value-badges-ctn .fi-badge:nth-child(n+3) {
+    display: none !important;
+}
+
+/* NProgress ICM — pakai bawaan Livewire, tint brand #1E2A4A */
+:root {
+    --livewire-progress-bar-color: #1E2A4A;
+}
+#nprogress .bar {
+    background: #1E2A4A !important;
+    height: 3px !important;
+}
+#nprogress .peg {
+    box-shadow: 0 0 10px #1E2A4A, 0 0 5px #1E2A4A !important;
+}
+
+/* Mode C — Fully Collapsible Off-Canvas (overlay, tidak ada rail) */
+.fi-body-has-sidebar-fully-collapsible-on-desktop .fi-main-ctn {
+    transition: margin-left 200ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+    .fi-body-has-sidebar-fully-collapsible-on-desktop .fi-sidebar,
+    .fi-body-has-sidebar-fully-collapsible-on-desktop .fi-main-ctn {
+        transition: none;
+    }
+}

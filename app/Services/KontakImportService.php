@@ -6,6 +6,7 @@ use App\Models\KategoriKegiatan;
 use App\Models\Kegiatan;
 use App\Models\Kontak;
 use App\Models\Perusahaan;
+use App\Support\Concerns\CleansUtf8;
 use App\Support\EventDetektor;
 use App\Support\KlasifikasiTabel;
 use App\Support\PhoneNormalizer;
@@ -15,18 +16,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class KontakImportService
 {
-    /**
-     * Header kolom fleksibel (case-insensitive) -> key canonical.
-     */
-    public const COLUMN_ALIASES = [
-        'nama_perusahaan' => ['nama perusahaan', 'nama_perusahaan', 'perusahaan', 'nama_company', 'company', 'nama customer'],
-        'industri' => ['industri', 'bidang', 'jenis industri'],
-        'nama' => ['nama', 'nama kontak', 'nama_kontak', 'pic', 'nama_pic', 'kontak', 'nama_pic'],
-        'no_telepon' => ['no telepon', 'no_telepon', 'no telp', 'no_telp', 'telp', 'telepon', 'hp', 'no hp', 'no_hp', 'phone', 'no. hp', 'no handphone'],
-        'catatan' => ['catatan', 'keterangan', 'notes', 'remark'],
-    ];
-
-    public const KONTALK_STATUS_UMUM = ['belum_direspon', 'sudah_dikirim', 'sudah_dicoba', 'belum_dicoba'];
+    use CleansUtf8;
 
     /**
      * Kata kunci untuk menolak baris/sheet teknis (bukan data kontak).
@@ -547,34 +537,6 @@ class KontakImportService
         }
 
         return false;
-    }
-
-    protected function normalizeHeaderKey(string $header): string
-    {
-        return preg_replace('/[^a-z0-9]/', '', mb_strtolower(trim($header))) ?? '';
-    }
-
-    /**
-     * Jamin string valid UTF-8. File lama sering berisi ANSI/Windows-1252
-     * sehingga byte-nya membuat Livewire/JSON gagal serialisasi.
-     */
-    protected function cleanUtf8(string $value): string
-    {
-        if ($value === '' || mb_check_encoding($value, 'UTF-8')) {
-            return $value;
-        }
-
-        foreach (['Windows-1252', 'ISO-8859-1'] as $encoding) {
-            $converted = @mb_convert_encoding($value, 'UTF-8', $encoding);
-            if (is_string($converted) && mb_check_encoding($converted, 'UTF-8')) {
-                return $converted;
-            }
-        }
-
-        // Fallback terakhir: buang byte tak valid, sisakan teks yang aman.
-        $stripped = preg_replace('/[^\x09\x0A\x0D\x20-\x7E\x80-\xFF]/', '', $value);
-
-        return mb_check_encoding($stripped, 'UTF-8') ? $stripped : '';
     }
 
     /**

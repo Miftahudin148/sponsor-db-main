@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Support\Hooks;
 
+use App\Support\Concerns\CleansUtf8;
 use Livewire\ComponentHook;
 use Livewire\Mechanisms\HandleComponents\ComponentContext;
 use ReflectionObject;
@@ -14,6 +15,8 @@ use ReflectionProperty;
  */
 class SanitizeUtf8State extends ComponentHook
 {
+    use CleansUtf8;
+
     public function dehydrate(?ComponentContext $context = null): void
     {
         $reflection = new ReflectionObject($this->component);
@@ -78,24 +81,5 @@ class SanitizeUtf8State extends ComponentHook
         }
 
         return $value;
-    }
-
-    protected function cleanUtf8(string $value): string
-    {
-        if ($value === '' || mb_check_encoding($value, 'UTF-8')) {
-            return $value;
-        }
-
-        foreach (['Windows-1252', 'ISO-8859-1'] as $encoding) {
-            $converted = @mb_convert_encoding($value, 'UTF-8', $encoding);
-            if (is_string($converted) && mb_check_encoding($converted, 'UTF-8')) {
-                return $converted;
-            }
-        }
-
-        // Fallback terakhir: buang byte tak valid.
-        $stripped = preg_replace('/[^\x09\x0A\x0D\x20-\x7E\x80-\xFF]/', '', $value);
-
-        return mb_check_encoding($stripped, 'UTF-8') ? $stripped : '';
     }
 }

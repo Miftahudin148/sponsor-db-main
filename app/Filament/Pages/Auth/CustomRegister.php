@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Filament\Auth;
+namespace App\Filament\Pages\Auth;
 
 use App\Models\Divisi;
 use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 use SensitiveParameter;
 use Spatie\Permission\Models\Role;
 
-// app/Filament/Auth/CustomRegister.php
+// app/Filament/Pages/Auth/CustomRegister.php
 class CustomRegister extends Register
 {
     public function getHeading(): string|Htmlable|null
@@ -41,12 +41,6 @@ class CustomRegister extends Register
                     ->maxLength(255)
                     ->autofocus()
                     ->placeholder('Budi Santoso'),
-                TextInput::make('nip')
-                    ->label('NIP')
-                    ->required()
-                    ->maxLength(50)
-                    ->unique($this->getUserModel())
-                    ->placeholder('198001012005011001'),
                 TextInput::make('email')
                     ->label('Email')
                     ->email()

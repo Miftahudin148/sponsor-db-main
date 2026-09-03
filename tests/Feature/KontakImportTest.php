@@ -3,11 +3,11 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\ImportKontaks;
-use App\Livewire\SanitizeUtf8State;
 use App\Models\Kontak;
 use App\Models\Perusahaan;
 use App\Models\User;
 use App\Services\KontakImportService;
+use App\Support\Hooks\SanitizeUtf8State;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;

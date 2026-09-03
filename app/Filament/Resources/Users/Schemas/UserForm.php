@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Users\Schemas;
 
-use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -58,16 +57,6 @@ class UserForm
                             ->maxLength(255)
                             ->placeholder('Budi Santoso'),
 
-                        TextInput::make('nip')
-                            ->label('NIP')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(50)
-                            ->placeholder('198001012005011001')
-                            ->helperText(fn () => auth()->user()?->isAdmin() ? 'Nomor Induk Pegawai — unik' : 'Hubungi Admin untuk ubah NIP')
-                            ->disabled(fn () => ! (bool) auth()->user()?->isAdmin())
-                            ->dehydrated(fn () => (bool) auth()->user()?->isAdmin()),
-
                         TextInput::make('email')
                             ->label('Email')
                             ->email()
@@ -120,34 +109,16 @@ class UserForm
                             ->maxLength(255),
 
                         Select::make('roles')
-                            ->label('Peran (Role)')
+                            ->label('Peran')
                             ->relationship('roles', 'name')
                             ->multiple()
                             ->preload()
                             ->searchable()
                             ->native(false)
-                            ->helperText(fn () => auth()->user()?->isAdmin() ? 'Pilih satu atau lebih peran: Admin, karyawan' : 'Hanya Admin yang bisa mengubah peran')
+                            ->helperText('Admin = semua akses. Karyawan = hanya lihat & export (atur detail di menu Peran & Hak Akses).')
                             ->disabled(fn () => ! (bool) auth()->user()?->isAdmin())
                             ->dehydrated(fn () => (bool) auth()->user()?->isAdmin())
                             ->columnSpanFull(),
-                    ]),
-
-                Section::make('Hak Akses Rinci (Per-Karyawan)')
-                    ->description('Atur baca/tambah/ubah/hapus & export/import per modul — default karyawan hanya baca + export')
-                    ->icon('heroicon-o-adjustments-horizontal')
-                    ->columns(1)
-                    ->visible(fn () => (bool) auth()->user()?->isAdmin())
-                    ->schema([
-                        CheckboxList::make('permissions')
-                            ->label('Hak Akses')
-                            ->relationship('permissions', 'name')
-                            ->searchable()
-                            ->bulkToggleable()
-                            ->columns(2)
-                            ->gridDirection('row')
-                            ->helperText('Centang hak yang diberikan. Kosong = ikut peran default (karyawan: baca+export). Admin bypass semua.')
-                            ->disabled(fn () => ! (bool) auth()->user()?->isAdmin())
-                            ->dehydrated(fn () => (bool) auth()->user()?->isAdmin()),
                     ]),
             ]);
     }

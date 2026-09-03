@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kontak;
-use App\Support\KontakSmartSearch;
+use App\Services\KontakSmartSearch;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -25,15 +25,15 @@ class KontakExportController extends Controller
         }
 
         if (filled($status = $request->query('status'))) {
-            $query->where('status_verifikasi', $status);
+            $query->whereIn('status_verifikasi', (array) $status);
         }
 
         if (filled($kegiatanId = $request->query('kegiatan_id'))) {
-            $query->where('kegiatan_id', $kegiatanId);
+            $query->whereIn('kegiatan_id', (array) $kegiatanId);
         }
 
         if (filled($kategoriId = $request->query('kategori_kegiatan_id'))) {
-            $query->where('kategori_kegiatan_id', $kategoriId);
+            $query->whereIn('kategori_kegiatan_id', (array) $kategoriId);
         }
 
         $filename = 'kontak-'.now()->format('Y-m-d_His').'.csv';

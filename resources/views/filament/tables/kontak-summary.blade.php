@@ -16,7 +16,7 @@
     </style>
 @endif
 
-<div class="fi-ta-kontak-summary grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+<div class="fi-ta-kontak-summary grid gap-3 grid-cols-1 md:grid-cols-5">
     @foreach ($cards as $card)
         <div class="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
             <span
