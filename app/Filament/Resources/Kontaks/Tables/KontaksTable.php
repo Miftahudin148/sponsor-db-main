@@ -6,8 +6,8 @@ namespace App\Filament\Resources\Kontaks\Tables;
 
 use App\Filament\Pages\ImportKontaks;
 use App\Models\Kontak;
-use App\Support\KontakSmartSearch;
-use App\Support\PetaNomorPerusahaan;
+use App\Services\KontakSmartSearch;
+use App\Services\PetaNomorPerusahaan;
 use App\Support\PhoneNormalizer;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;

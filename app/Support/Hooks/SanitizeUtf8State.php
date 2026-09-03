@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Support\Hooks;
 
 use App\Support\Concerns\CleansUtf8;
 use Livewire\ComponentHook;

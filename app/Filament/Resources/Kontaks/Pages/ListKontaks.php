@@ -5,7 +5,7 @@ namespace App\Filament\Resources\Kontaks\Pages;
 use App\Filament\Pages\ImportKontaks;
 use App\Filament\Resources\Kontaks\KontakResource;
 use App\Models\Kontak;
-use App\Support\PetaNomorPerusahaan;
+use App\Services\PetaNomorPerusahaan;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;

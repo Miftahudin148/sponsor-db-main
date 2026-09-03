@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Kontak;
-use App\Support\KontakSmartSearch;
+use App\Services\KontakSmartSearch;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 

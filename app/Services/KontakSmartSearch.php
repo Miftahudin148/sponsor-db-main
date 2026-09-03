@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Support;
+namespace App\Services;
 
 use App\Models\Kontak;
+use App\Support\PhoneNormalizer;
 use Illuminate\Database\Eloquent\Builder;
 
 class KontakSmartSearch
