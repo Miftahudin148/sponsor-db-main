@@ -59,12 +59,6 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
         return $this->belongsTo(Divisi::class, 'divisi_id');
     }
 
-    /** @deprecated pakai divisi() */
-    public function department(): BelongsTo
-    {
-        return $this->divisi();
-    }
-
     public function isAdmin(): bool
     {
         if ($this->hasRole('admin')) {

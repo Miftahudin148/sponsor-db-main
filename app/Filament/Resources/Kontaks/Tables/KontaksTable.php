@@ -8,6 +8,7 @@ use App\Filament\Pages\ImportKontaks;
 use App\Models\Kontak;
 use App\Support\KontakSmartSearch;
 use App\Support\PetaNomorPerusahaan;
+use App\Support\PhoneNormalizer;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
@@ -436,7 +437,7 @@ class KontaksTable
 
     protected static function whatsappUrl(Kontak $record): string
     {
-        $phone = preg_replace('/\D+/', '', (string) $record->no_telepon);
+        $phone = PhoneNormalizer::normalize((string) $record->no_telepon);
 
         return $phone === '' ? '#' : 'https://wa.me/'.$phone;
     }
