@@ -165,3 +165,14 @@
 #nprogress .peg {
     box-shadow: 0 0 10px #1E2A4A, 0 0 5px #1E2A4A !important;
 }
+
+/* Mode C — Fully Collapsible Off-Canvas (overlay, tidak ada rail) */
+.fi-body-has-sidebar-fully-collapsible-on-desktop .fi-main-ctn {
+    transition: margin-left 200ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+    .fi-body-has-sidebar-fully-collapsible-on-desktop .fi-sidebar,
+    .fi-body-has-sidebar-fully-collapsible-on-desktop .fi-main-ctn {
+        transition: none;
+    }
+}
